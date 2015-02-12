@@ -1,0 +1,12 @@
+[root]
+name = "r7-rs"
+version = "0.0.1"
+dependencies = [
+ "peg 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "peg"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+

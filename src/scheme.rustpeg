@@ -1,0 +1,68 @@
+use super::lisp_value::LispValue;
+
+#[pub]
+expression -> LispValue
+  = number / boolean / atom / string / quoted / listForm
+
+number -> LispValue
+  = "-"? digit+ { LispValue::Number(match_str.parse::<i64>().unwrap()) }
+
+boolean -> LispValue
+  = true / false
+
+true -> LispValue
+  = "#" ("true" / "t") { LispValue::Boolean(true) }
+
+false -> LispValue
+  = "#" ("false" / "f") { LispValue::Boolean(false) }
+
+atom -> LispValue
+  = (letter / symbol) (letter / digit / symbol / [.@])* {
+      LispValue::Atom(match_str.to_string())
+  }
+
+string -> LispValue
+  = "\"" body:char* "\"" { LispValue::String(body.concat()) }
+
+quoted -> LispValue
+  = "'" expr:expression { LispValue::quote(expr) }
+
+listForm -> LispValue
+  = "(" whitespace* value:(dottedList / list) whitespace* ")" { value }
+
+list -> LispValue
+  = exprs:listBody { LispValue::List(exprs) }
+
+dottedList -> LispValue
+  = head:listBody dot tail:expression { LispValue::DottedList(head, box tail) }
+
+dot = whitespace+ "." whitespace+
+
+listBody -> Vec<LispValue>
+  = expression ** whitespace
+
+char -> String
+  = escapeSequence / [^"] { match_str.to_string() }
+
+escapeSequence -> String
+  = "\\" ["\/bntrf] {
+      match match_str {
+          "\\\"" => "\"",
+          "\\\\" => "\\",
+          "\\/"  => "/",
+          "\\b"  => "\x08",
+          "\\n"  => "\n",
+          "\\t"  => "\t",
+          "\\r"  => "\r",
+          "\\f"  => "\x0c",
+          _      => match_str,
+      }.to_string()
+  }
+
+whitespace = [\n\r ]
+
+letter = [a-zA-Z]
+
+digit = [0-9]
+
+symbol = [!#$%&|*+\-/:<=>?@^_~]
