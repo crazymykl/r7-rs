@@ -1,22 +1,6 @@
-#![feature(plugin, core, io)]
-#[plugin] extern crate peg_syntax_ext;
+extern crate "r7-rs" as r7rs;
 
-mod lisp_value;
-
-use std::old_io::stdin;
-use scheme::expression;
-
-peg_file! scheme("scheme.rustpeg");
-
-fn read() -> String {
-    stdin().read_line().unwrap().trim().to_string()
-}
-
+#[cfg(not(test))]
 fn main() {
-    loop {
-        match expression(&read()) {
-            Ok(ast)  => println!("{:?}\n=> {}", ast, ast),
-            Err(err) => println!("{}", err)
-        }
-    }
+    r7rs::main();
 }

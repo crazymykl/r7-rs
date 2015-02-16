@@ -11,14 +11,14 @@ pub enum LispValue {
 }
 
 impl LispValue {
-  pub fn quote(expression: LispValue) -> LispValue {
-    LispValue::List(vec![LispValue::Atom("quote".to_string()), expression])
-  }
+    pub fn quote(expression: LispValue) -> LispValue {
+        LispValue::List(vec![LispValue::Atom("quote".to_string()), expression])
+    }
 }
 
 impl std::fmt::Display for Vec<LispValue> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let elts: Vec<String> = self.iter().map(|i| i.to_string()).collect();
+        let elts = self.iter().map(|i| i.to_string()).collect::<Vec<String>>();
         write!(f, "{}", elts.connect(" "))
     }
 }
