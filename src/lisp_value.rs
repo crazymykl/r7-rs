@@ -1,6 +1,7 @@
 use std::{self, fmt};
+use std::collections::HashMap;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LispValue {
     Atom(String),
     List(Vec<LispValue>),
@@ -10,9 +11,67 @@ pub enum LispValue {
     Boolean(bool)
 }
 
+pub type LispResult = Result<LispValue, String>;
+type LispFunction = Fn(&[LispValue]) -> LispResult;
+pub type LispEnvironment = HashMap<LispValue, Box<LispFunction>>;
+
+pub fn baseline() -> LispEnvironment {
+    let mut env: LispEnvironment = HashMap::new();
+    env.insert(LispValue::Atom("+".to_string()), box |x| add(x));
+    env
+}
+
+fn add(operands: &[LispValue]) -> LispResult {
+    let sum: i64 = operands.iter().map(|o|
+        match *o {
+            LispValue::Number(n) => n,
+            _ => 0// Err(format!("{} is not a number", o))
+        }
+    ).fold(0, |acc, n| acc + n);
+    Ok(LispValue::Number(sum))
+}
+
 impl LispValue {
     pub fn quote(expression: LispValue) -> LispValue {
         LispValue::List(vec![LispValue::Atom("quote".to_string()), expression])
+    }
+
+    pub fn eval(&self, world: &LispEnvironment) -> LispResult {
+        match *self {
+            LispValue::List(ref v) => function(v, &world),
+            _ => Ok(self.clone())
+        }
+    }
+}
+
+fn function(list: &[LispValue], world: &LispEnvironment) -> LispResult {
+    match list {
+        [ref f @ LispValue::Atom(_), args..] => {
+            if LispValue::Atom("quote".to_string()) == *f { return Ok(args[0].clone()) };
+            match world.get(f) {
+                Some(f) => f(&try!(eval_args(args, world))),
+                None => Err(format!("No such fuction: {}", f))
+            }
+        },
+        [ref f, ..] => Err(format!("{} is not a fuction.", f)),
+        [] => Ok(LispValue::List(vec![]))
+    }
+}
+
+fn eval_args(args: &[LispValue], env: &LispEnvironment) -> Result<Vec<LispValue>, String> {
+    let mut new_args = vec![];
+    for arg in args {
+        new_args.push(try!(arg.eval(env)))
+    };
+    Ok(new_args)
+}
+
+impl std::fmt::Display for LispResult {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Ok(ref item) => write!(f, "=> {}", item),
+            Err(ref msg) => write!(f, "ERR: {}", msg)
+        }
     }
 }
 
