@@ -17,17 +17,18 @@ pub type LispEnvironment = HashMap<LispValue, Box<LispFunction>>;
 
 pub fn baseline() -> LispEnvironment {
     let mut env: LispEnvironment = HashMap::new();
-    env.insert(LispValue::Atom("+".to_string()), box |x| add(x));
+    env.insert(LispValue::Atom("+".to_string()), box add);
     env
 }
 
 fn add(operands: &[LispValue]) -> LispResult {
-    let sum: i64 = operands.iter().map(|o|
-        match *o {
+    let mut sum = 0;
+    for op in operands {
+        sum += match *op {
             LispValue::Number(n) => n,
-            _ => 0// Err(format!("{} is not a number", o))
+            _ => return Err(format!("Non-numeric operand: {}", op))
         }
-    ).fold(0, |acc, n| acc + n);
+    }
     Ok(LispValue::Number(sum))
 }
 
