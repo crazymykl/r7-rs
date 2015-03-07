@@ -6,11 +6,12 @@ pub enum LispValue {
     Atom(String),
     List(Vec<LispValue>),
     DottedList(Vec<LispValue>, Box<LispValue>),
-    Number(i64),
+    Number(LispNum),
     String(String),
     Boolean(bool)
 }
 
+pub type LispNum = i64;
 pub type LispResult = Result<LispValue, String>;
 type LispFunction = Fn(&[LispValue]) -> LispResult;
 pub type LispEnvironment = HashMap<LispValue, Box<LispFunction>>;
@@ -22,14 +23,15 @@ pub fn baseline() -> LispEnvironment {
 }
 
 fn add(operands: &[LispValue]) -> LispResult {
-    let mut sum = 0;
-    for op in operands {
-        sum += match *op {
-            LispValue::Number(n) => n,
-            _ => return Err(format!("Non-numeric operand: {}", op))
-        }
+    let numbers = operands.iter().map(assert_numericality);
+    std::result::fold(numbers, 0, |a, e| a + e).map(LispValue::Number)
+}
+
+fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
+    match *item {
+        LispValue::Number(n) => Ok(n),
+        _ => Err(format!("Non-numeric operand: {}", item)),
     }
-    Ok(LispValue::Number(sum))
 }
 
 impl LispValue {

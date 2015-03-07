@@ -1,11 +1,11 @@
-use super::LispValue;
+use super::{LispValue, LispNum};
 
 #[pub]
 expression -> LispValue
   = number / boolean / atom / string / quoted / listForm
 
 number -> LispValue
-  = "-"? digit+ { LispValue::Number(match_str.parse::<i64>().unwrap()) }
+  = "-"? digit+ { LispValue::Number(match_str.parse::<LispNum>().unwrap()) }
 
 boolean -> LispValue
   = true / false

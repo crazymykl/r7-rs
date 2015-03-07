@@ -4,7 +4,7 @@
 mod lisp_value;
 
 use std::old_io::stdin;
-pub use lisp_value::{LispValue, baseline};
+pub use lisp_value::{LispValue, LispNum, baseline};
 pub use scheme::expression;
 
 peg_file! scheme("scheme.rustpeg");
