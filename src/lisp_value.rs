@@ -41,7 +41,8 @@ impl LispValue {
 
     pub fn eval(&self, world: &LispEnvironment) -> LispResult {
         match *self {
-            LispValue::List(ref v) => function(v, &world),
+            LispValue::List(ref v) |
+            LispValue::DottedList(ref v, _) => function(v, &world),
             _ => Ok(self.clone())
         }
     }
