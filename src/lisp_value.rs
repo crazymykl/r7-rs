@@ -63,11 +63,7 @@ fn function(list: &[LispValue], world: &LispEnvironment) -> LispResult {
 }
 
 fn eval_args(args: &[LispValue], env: &LispEnvironment) -> Result<Vec<LispValue>, String> {
-    let mut new_args = vec![];
-    for arg in args {
-        new_args.push(try!(arg.eval(env)))
-    };
-    Ok(new_args)
+    args.iter().map(|arg| arg.eval(env)).collect()
 }
 
 impl std::fmt::Display for LispResult {
