@@ -1,5 +1,7 @@
 use std::{self, fmt};
-use std::collections::HashMap;
+use std::default::Default;
+
+use super::lisp_environment::LispEnvironment;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LispValue {
@@ -13,25 +15,9 @@ pub enum LispValue {
 
 pub type LispNum = i64;
 pub type LispResult = Result<LispValue, String>;
-type LispFunction = Fn(&[LispValue]) -> LispResult;
-pub type LispEnvironment = HashMap<LispValue, Box<LispFunction>>;
 
-pub fn baseline() -> LispEnvironment {
-    let mut env: LispEnvironment = HashMap::new();
-    env.insert(LispValue::Atom("+".to_string()), box add);
-    env
-}
-
-fn add(operands: &[LispValue]) -> LispResult {
-    let numbers = operands.iter().map(assert_numericality);
-    std::result::fold(numbers, 0, |a, e| a + e).map(LispValue::Number)
-}
-
-fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
-    match *item {
-        LispValue::Number(n) => Ok(n),
-        _ => Err(format!("Non-numeric operand: {}", item)),
-    }
+pub fn eval(expr: &LispValue) -> LispResult {
+    expr.eval(&LispEnvironment::default())
 }
 
 impl LispValue {
@@ -42,28 +28,10 @@ impl LispValue {
     pub fn eval(&self, world: &LispEnvironment) -> LispResult {
         match *self {
             LispValue::List(ref v) |
-            LispValue::DottedList(ref v, _) => function(v, &world),
+            LispValue::DottedList(ref v, _) => world.call(v),
             _ => Ok(self.clone())
         }
     }
-}
-
-fn function(list: &[LispValue], world: &LispEnvironment) -> LispResult {
-    match list {
-        [ref f @ LispValue::Atom(_), args..] => {
-            if LispValue::Atom("quote".to_string()) == *f { return Ok(args[0].clone()) };
-            match world.get(f) {
-                Some(f) => f(&try!(eval_args(args, world))),
-                None => Err(format!("No such fuction: {}", f))
-            }
-        },
-        [ref f, ..] => Err(format!("{} is not a fuction.", f)),
-        [] => Ok(LispValue::List(vec![]))
-    }
-}
-
-fn eval_args(args: &[LispValue], env: &LispEnvironment) -> Result<Vec<LispValue>, String> {
-    args.iter().map(|arg| arg.eval(env)).collect()
 }
 
 impl std::fmt::Display for LispResult {
