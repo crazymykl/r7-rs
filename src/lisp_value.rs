@@ -16,16 +16,16 @@ pub enum LispValue {
 pub type LispNum = i64;
 pub type LispResult = Result<LispValue, String>;
 
-pub fn eval(expr: &LispValue) -> LispResult {
-    expr.eval(&LispEnvironment::default())
-}
-
 impl LispValue {
     pub fn quote(expression: LispValue) -> LispValue {
         LispValue::List(vec![LispValue::Atom("quote".to_string()), expression])
     }
 
-    pub fn eval(&self, world: &LispEnvironment) -> LispResult {
+    pub fn eval(&self) -> LispResult {
+        self.eval_in(&LispEnvironment::default())
+    }
+
+    pub fn eval_in(&self, world: &LispEnvironment) -> LispResult {
         match *self {
             LispValue::List(ref v) |
             LispValue::DottedList(ref v, _) => world.call(v),

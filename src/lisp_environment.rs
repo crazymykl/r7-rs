@@ -15,13 +15,17 @@ impl LispEnvironment {
             [ref f @ LispValue::Atom(_), args..] => {
                 if LispValue::Atom("quote".to_string()) == *f { return Ok(args[0].clone()) };
                 match self.vtable.get(f) {
-                    Some(f) => f(&try!(eval_args(args, self))),
+                    Some(f) => f(&try!(self.eval_args(args))),
                     None => Err(format!("No such function: {}", f))
                 }
             },
             [ref f, ..] => Err(format!("{} is not a function.", f)),
             [] => Ok(LispValue::List(vec![]))
         }
+    }
+
+    fn eval_args(&self, args: &[LispValue]) ->  Result<Vec<LispValue>, String> {
+        args.iter().map(|arg| arg.eval_in(self)).collect()
     }
 }
 
@@ -43,8 +47,4 @@ fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
         LispValue::Number(n) => Ok(n),
         _ => Err(format!("Non-numeric operand: {}", item)),
     }
-}
-
-fn eval_args(args: &[LispValue], env: &LispEnvironment) -> Result<Vec<LispValue>, String> {
-    args.iter().map(|arg| arg.eval(env)).collect()
 }
