@@ -1,4 +1,4 @@
-#![feature(plugin, core, io, box_syntax, unicode, collections)]
+#![feature(plugin, core, io, box_syntax, collections)]
 #![plugin(peg_syntax_ext)]
 
 mod lisp_value;

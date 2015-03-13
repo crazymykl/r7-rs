@@ -4,9 +4,18 @@ use std::default::Default;
 use super::lisp_value::{LispValue, LispResult, LispNum};
 
 type LispFunction = Fn(&[LispValue]) -> LispResult;
+type LispVtable = HashMap<LispValue, Box<LispFunction>>;
+
+macro_rules! lisp_funcs {
+    ($($name:expr => $definition:expr),+ $(,)*) => ({
+        let mut env: LispVtable = HashMap::new();
+        $(env.insert(LispValue::Atom($name.to_string()),  box $definition);)+
+        env
+    });
+}
 
 pub struct LispEnvironment {
-    vtable: HashMap<LispValue, Box<LispFunction>>,
+    vtable: LispVtable,
 }
 
 impl LispEnvironment {
@@ -31,15 +40,24 @@ impl LispEnvironment {
 
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
-        let mut env : HashMap<LispValue, Box<LispFunction>> = HashMap::new();
-        env.insert(LispValue::Atom("+".to_string()), box add);
-        LispEnvironment { vtable: env }
+        let vtable = lisp_funcs!(
+            "+" => |args| numeric_op(args, &|a, e| a + e),
+            "-" => |args| match args {
+                [LispValue::Number(n)] => Ok(LispValue::Number(-n)),
+                _ => numeric_op(args, &|a, e| a - e),
+            },
+            "*" => |args| numeric_op(args, &|a, e| a * e),
+            "/" => |args| numeric_op(args, &|a, e| a / e)
+        );
+        LispEnvironment {vtable: vtable}
     }
 }
 
-fn add(operands: &[LispValue]) -> LispResult {
-    let numbers = operands.iter().map(assert_numericality);
-    std::result::fold(numbers, 0, |a, e| a + e).map(LispValue::Number)
+fn numeric_op(operands: &[LispValue],
+              fold: &Fn(LispNum, LispNum) -> LispNum) -> LispResult {
+    let mut numbers = operands.iter().map(assert_numericality);
+    let initial = try!(numbers.next().unwrap());
+    std::result::fold(numbers, initial, |a, e| fold(a, e)).map(LispValue::Number)
 }
 
 fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
