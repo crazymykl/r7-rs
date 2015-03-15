@@ -41,23 +41,38 @@ impl LispEnvironment {
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
         let vtable = lisp_funcs!(
-            "+" => |args| numeric_op(args, &|a, e| a + e),
-            "-" => |args| match args {
-                [LispValue::Number(n)] => Ok(LispValue::Number(-n)),
-                _ => numeric_op(args, &|a, e| a - e),
-            },
-            "*" => |args| numeric_op(args, &|a, e| a * e),
-            "/" => |args| numeric_op(args, &|a, e| a / e)
+            "+" => |args| numeric_op(args, 0, &|a, e| a + e),
+            "-" => |args| numeric_op(args, 0, &|a, e| a - e),
+            "*" => |args| numeric_op(args, 1, &|a, e| a * e),
+            "/" => div,
         );
         LispEnvironment {vtable: vtable}
     }
 }
 
 fn numeric_op(operands: &[LispValue],
+              fallback: LispNum,
               fold: &Fn(LispNum, LispNum) -> LispNum) -> LispResult {
     let mut numbers = operands.iter().map(assert_numericality);
-    let initial = try!(numbers.next().unwrap());
+    let initial = try!(numbers.next().unwrap_or(Ok(fallback)));
+    if numbers.len() == 0 { return Ok(LispValue::Number(fold(fallback, initial))); }
     std::result::fold(numbers, initial, |a, e| fold(a, e)).map(LispValue::Number)
+}
+
+fn div(operands: &[LispValue]) -> LispResult {
+    match operands {
+        [LispValue::Number(0)] => Err("Cannot divide by zero.".to_string()),
+        [LispValue::Number(n)] => Ok(LispValue::Number(1 / n)),
+        _ => {
+            let mut numbers = operands.iter().map(|item| match *item {
+                LispValue::Number(0) => Err("Cannot divide by zero.".to_string()),
+                LispValue::Number(n) => Ok(n),
+                _ => Err(format!("Non-numeric operand: {}", item)),
+            });
+            let initial = try!(numbers.next().unwrap_or(Ok(1)));
+            std::result::fold(numbers, initial, |a, e| a / e).map(LispValue::Number)
+        }
+    }
 }
 
 fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
