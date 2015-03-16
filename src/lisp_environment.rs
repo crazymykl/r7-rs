@@ -4,12 +4,12 @@ use std::default::Default;
 use super::lisp_value::{LispValue, LispResult, LispNum};
 
 type LispFunction = Fn(&[LispValue]) -> LispResult;
-type LispVtable = HashMap<LispValue, Box<LispFunction>>;
+type LispVtable = HashMap<String, Box<LispFunction>>;
 
 macro_rules! lisp_funcs {
     ($($name:expr => $definition:expr),+ $(,)*) => ({
         let mut env: LispVtable = HashMap::new();
-        $(env.insert(LispValue::Atom($name.to_string()),  box $definition);)+
+        $(env.insert($name.to_string(),  box $definition);)+
         env
     });
 }
@@ -21,8 +21,8 @@ pub struct LispEnvironment {
 impl LispEnvironment {
     pub fn call(&self, list: &[LispValue]) -> LispResult {
         match list {
-            [ref f @ LispValue::Atom(_), args..] => {
-                if LispValue::Atom("quote".to_string()) == *f { return Ok(args[0].clone()) };
+            [LispValue::Atom(ref f), args..] => {
+                if "quote".to_string() == *f { return Ok(args[0].clone()) };
                 match self.vtable.get(f) {
                     Some(f) => f(&try!(self.eval_args(args))),
                     None => Err(format!("No such function: {}", f))
