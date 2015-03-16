@@ -60,17 +60,18 @@ fn numeric_op(operands: &[LispValue],
 }
 
 fn div(operands: &[LispValue]) -> LispResult {
-    match operands {
-        [LispValue::Number(0)] => Err("Cannot divide by zero.".to_string()),
-        [LispValue::Number(n)] => Ok(LispValue::Number(1 / n)),
-        _ => {
-            let mut numbers = operands.iter().map(|item| match *item {
-                LispValue::Number(0) => Err("Cannot divide by zero.".to_string()),
-                LispValue::Number(n) => Ok(n),
-                _ => Err(format!("Non-numeric operand: {}", item)),
+    let numbers: Vec<LispNum> = try!(operands.iter().map(assert_numericality).collect());
+    match &numbers[..] {
+        []  => Err("Not enough arguments.".to_string()),
+        [0] => Err("Cannot divide by zero.".to_string()),
+        [n] => Ok(LispValue::Number(1 / n)),
+        [0, ..] => Ok(LispValue::Number(0)),
+        [n, rest..] => {
+            let numbers = rest.iter().map(|item| match *item {
+                0 => Err("Cannot divide by zero.".to_string()),
+                x => Ok(x),
             });
-            let initial = try!(numbers.next().unwrap_or(Ok(1)));
-            std::result::fold(numbers, initial, |a, e| a / e).map(LispValue::Number)
+            std::result::fold(numbers, n, |a, e| a / e).map(LispValue::Number)
         }
     }
 }
