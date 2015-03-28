@@ -1,8 +1,10 @@
 [package]
-
 name = "r7-rs"
 version = "0.0.1"
 authors = ["Mike MacDonald (crazymykl) <crazymykl@gmail.com>"]
+
+[lib]
+name = "r7rs"
 
 [dependencies]
 peg = "0.2.0"

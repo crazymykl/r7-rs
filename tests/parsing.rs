@@ -1,6 +1,6 @@
 #![feature(box_syntax)]
 
-extern crate "r7-rs" as r7rs;
+extern crate r7rs;
 
 use r7rs::LispValue;
 use r7rs::LispValue::*;
