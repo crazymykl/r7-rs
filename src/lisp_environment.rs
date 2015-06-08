@@ -1,7 +1,7 @@
 use std;
 use std::collections::HashMap;
 use std::default::Default;
-use super::lisp_value::{LispValue, LispResult, LispNum};
+use super::lisp_value::{LispValue, LispResult, LispNum, LispList};
 
 type LispFunction = Fn(&[LispValue]) -> LispResult;
 type LispVtable = HashMap<String, Box<LispFunction>>;
@@ -29,7 +29,7 @@ impl LispEnvironment {
                 }
             },
             [ref f, ..] => Err(format!("{} is not a function.", f)),
-            [] => Ok(LispValue::List(vec![]))
+            [] => Ok(LispValue::List(LispList(vec![])))
         }
     }
 

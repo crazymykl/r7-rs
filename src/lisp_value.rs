@@ -6,19 +6,22 @@ use super::lisp_environment::LispEnvironment;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LispValue {
     Atom(String),
-    List(Vec<LispValue>),
-    DottedList(Vec<LispValue>, Box<LispValue>),
+    List(LispList),
+    DottedList(LispList, Box<LispValue>),
     Number(LispNum),
     String(String),
     Boolean(bool)
 }
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct LispList(pub Vec<LispValue>);
 
 pub type LispNum = i64;
 pub type LispResult = Result<LispValue, String>;
 
 impl LispValue {
     pub fn quote(expression: LispValue) -> LispValue {
-        LispValue::List(vec![LispValue::Atom("quote".to_string()), expression])
+        LispValue::List(LispList(vec![LispValue::Atom("quote".to_string()), expression]))
     }
 
     pub fn eval(&self) -> LispResult {
@@ -28,24 +31,15 @@ impl LispValue {
     pub fn eval_in(&self, world: &LispEnvironment) -> LispResult {
         match *self {
             LispValue::List(ref v) |
-            LispValue::DottedList(ref v, _) => world.call(v),
+            LispValue::DottedList(ref v, _) => world.call(&v.0),
             _ => Ok(self.clone())
         }
     }
 }
 
-impl std::fmt::Display for LispResult {
+impl std::fmt::Display for LispList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Ok(ref item) => write!(f, "=> {}", item),
-            Err(ref msg) => write!(f, "ERR: {}", msg)
-        }
-    }
-}
-
-impl std::fmt::Display for Vec<LispValue> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let elts = self.iter().map(|i| i.to_string()).collect::<Vec<String>>();
+        let elts = self.0.iter().map(|i| i.to_string()).collect::<Vec<String>>();
         write!(f, "{}", elts.connect(" "))
     }
 }

@@ -7,4 +7,4 @@ authors = ["Mike MacDonald (crazymykl) <crazymykl@gmail.com>"]
 name = "r7rs"
 
 [dependencies]
-peg = "0.2.0"
+peg = "0.3.0"
