@@ -2,7 +2,7 @@
 
 extern crate r7rs;
 
-use r7rs::{LispValue, LispList};
+use r7rs::{LispValue};
 use r7rs::LispValue::*;
 use r7rs::expression;
 
@@ -28,11 +28,11 @@ test_parsing!(atoms,
 );
 
 test_parsing!(lists,
-    "(foo bar baz)" => List(LispList(vec![atom("foo"), atom("bar"), atom("baz")]))
+    "(foo bar baz)" => List(vec![atom("foo"), atom("bar"), atom("baz")])
 );
 
 test_parsing!(dotted_lists,
-    "(foo bar . baz)" => DottedList(LispList(vec![atom("foo"), atom("bar")]), box atom("baz"))
+    "(foo bar . baz)" => DottedList(vec![atom("foo"), atom("bar")], box atom("baz"))
 );
 
 test_parsing!(numbers,

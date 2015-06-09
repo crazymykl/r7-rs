@@ -1,4 +1,4 @@
-use super::{LispValue, LispList, LispNum};
+use super::{LispValue, LispNum};
 
 #[pub]
 expression -> LispValue
@@ -31,10 +31,10 @@ listForm -> LispValue
   = "(" whitespace* value:(dottedList / list) whitespace* ")" { value }
 
 list -> LispValue
-  = exprs:listBody { LispValue::List(LispList(exprs)) }
+  = exprs:listBody { LispValue::List(exprs) }
 
 dottedList -> LispValue
-  = head:listBody dot tail:expression { LispValue::DottedList(LispList(head), box tail) }
+  = head:listBody dot tail:expression { LispValue::DottedList(head, box tail) }
 
 dot = whitespace+ "." whitespace+
 
