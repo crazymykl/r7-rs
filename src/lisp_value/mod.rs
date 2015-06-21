@@ -1,15 +1,19 @@
-use std::{self, fmt};
+use std::fmt;
 use std::default::Default;
 
-use super::lisp_environment::LispEnvironment;
+pub mod primitive_function;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+use super::lisp_environment::LispEnvironment;
+pub use self::primitive_function::PrimitiveFunction;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LispValue {
     Atom(String),
     List(Vec<LispValue>),
     DottedList(Vec<LispValue>, Box<LispValue>),
     Number(LispNum),
     String(String),
+    PrimitiveFunction(PrimitiveFunction),
     Boolean(bool)
 }
 
@@ -34,7 +38,7 @@ impl LispValue {
     }
 }
 
-impl std::fmt::Display for LispValue {
+impl fmt::Display for LispValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let string = match *self {
             LispValue::Atom(ref x) => x.to_string(),
@@ -42,6 +46,7 @@ impl std::fmt::Display for LispValue {
             LispValue::DottedList(ref x, ref y) => format!("({} . {})", format_list(x), y),
             LispValue::Number(x) => x.to_string(),
             LispValue::String(ref x) => format!("\"{}\"", x),
+            LispValue::PrimitiveFunction(_) => "<primitive function>".to_string(),
             LispValue::Boolean(true) => "#t".to_string(),
             LispValue::Boolean(false) => "#f".to_string(),
         };

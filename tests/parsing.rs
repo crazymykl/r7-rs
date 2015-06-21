@@ -2,7 +2,7 @@
 
 extern crate r7rs;
 
-use r7rs::{LispValue};
+use r7rs::LispValue;
 use r7rs::LispValue::*;
 use r7rs::expression;
 

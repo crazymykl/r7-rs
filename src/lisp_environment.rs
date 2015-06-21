@@ -1,15 +1,20 @@
 use std;
+use std::rc::Rc;
 use std::collections::HashMap;
 use std::default::Default;
-use super::lisp_value::{LispValue, LispResult, LispNum};
+use super::lisp_value::{LispValue, LispResult, LispNum, PrimitiveFunction};
 
-type LispFunction = Fn(&[LispValue]) -> LispResult;
-type LispVtable = HashMap<String, Box<LispFunction>>;
+type LispVtable = HashMap<String, LispValue>;
 
 macro_rules! lisp_funcs {
     ($($name:expr => $definition:expr),+ $(,)*) => ({
         let mut env: LispVtable = HashMap::new();
-        $(env.insert($name.to_string(),  box $definition);)+
+        $(
+            let name = $name;
+            env.insert(name.to_string(), LispValue::PrimitiveFunction(
+                PrimitiveFunction::new(name, Rc::new($definition))
+            ));
+        )+
         env
     });
 }
@@ -24,7 +29,8 @@ impl LispEnvironment {
             [LispValue::Atom(ref f), args..] => {
                 if "quote".to_string() == *f { return Ok(args[0].clone()) };
                 match self.vtable.get(f) {
-                    Some(f) => f(&try!(self.eval_args(args))),
+                    Some(&LispValue::PrimitiveFunction(ref f)) => (f.clone().func)(&try!(self.eval_args(args))),
+                    Some(&ref x) => Ok(x.clone()),
                     None => Err(format!("No such function: {}", f))
                 }
             },
