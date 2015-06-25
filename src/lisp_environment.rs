@@ -74,7 +74,7 @@ impl LispEnvironment {
 
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
-        let mut vtable = lisp_funcs!(
+        let vtable = lisp_funcs!(
             "+" => |args| numeric_op(args, 0, &|a, e| a + e),
             "-" => |args| numeric_op(args, 0, &|a, e| a - e),
             "*" => |args| numeric_op(args, 1, &|a, e| a * e),

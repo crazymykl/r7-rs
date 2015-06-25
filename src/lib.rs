@@ -7,7 +7,7 @@ mod lisp_environment;
 use std::io::{stdin, BufRead};
 
 pub use lisp_value::{LispValue, LispNum};
-use lisp_environment::LispEnvironment;
+pub use lisp_environment::LispEnvironment;
 pub use scheme::expression;
 
 peg_file! scheme("scheme.rustpeg");
