@@ -1,4 +1,4 @@
-#![feature(plugin, core, box_syntax, slice_patterns, unboxed_closures)]
+#![feature(plugin, box_syntax, slice_patterns, unboxed_closures, result_fold)]
 #![plugin(peg_syntax_ext)]
 
 mod lisp_value;

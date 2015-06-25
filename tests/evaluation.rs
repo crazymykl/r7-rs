@@ -17,5 +17,6 @@ macro_rules! test_evaluation {
 test_evaluation!(basics,
     "(+ 1 1)" => Number(2),
     "(/ (+ 4 2) 2)" => Number(3),
-    "(- 3 -1)" => Number(4)
+    "(- 3 -1)" => Number(4),
+    "(* six six)" => Number(36)
 );

@@ -39,6 +39,13 @@ impl LispEnvironment {
         }
     }
 
+    pub fn get(&self, identifier: &str) -> LispResult {
+        match self.vtable.get(identifier) {
+            Some(val) => Ok(val.clone()),
+            None      => Err("Undefined variable!".into())
+        }
+    }
+
     fn eval_args(&self, args: &[LispValue]) ->  Result<Vec<LispValue>, String> {
         args.iter().map(|arg| arg.eval_in(self)).collect()
     }
@@ -46,12 +53,13 @@ impl LispEnvironment {
 
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
-        let vtable = lisp_funcs!(
+        let mut vtable = lisp_funcs!(
             "+" => |args| numeric_op(args, 0, &|a, e| a + e),
             "-" => |args| numeric_op(args, 0, &|a, e| a - e),
             "*" => |args| numeric_op(args, 1, &|a, e| a * e),
             "/" => div,
         );
+        vtable.insert("six".into(), LispValue::Number(6));
         LispEnvironment {vtable: vtable}
     }
 }

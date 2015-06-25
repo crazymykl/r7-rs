@@ -33,6 +33,7 @@ impl LispValue {
         match *self {
             LispValue::List(ref v) |
             LispValue::DottedList(ref v, _) => world.call(v),
+            LispValue::Atom(ref v) => world.get(v),
             _ => Ok(self.clone())
         }
     }
