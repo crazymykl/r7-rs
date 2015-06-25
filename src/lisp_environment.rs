@@ -19,35 +19,56 @@ macro_rules! lisp_funcs {
     });
 }
 
+#[derive(Clone,Debug)]
 pub struct LispEnvironment {
     vtable: LispVtable,
 }
 
 impl LispEnvironment {
-    pub fn call(&self, list: &[LispValue]) -> LispResult {
-        match list {
+    pub fn call(&self, list: &[LispValue]) -> (LispResult, LispEnvironment) {
+        let mut new_world = self.clone();
+        let result = match list {
             [LispValue::Atom(ref f), args..] => {
-                if "quote".to_string() == *f { return Ok(args[0].clone()) };
-                match self.vtable.get(f) {
-                    Some(&LispValue::PrimitiveFunction(ref f)) => (f.clone().func)(&try!(self.eval_args(args))),
-                    Some(&ref x) => Ok(x.clone()),
-                    None => Err(format!("No such function: {}", f))
+                if "define".to_string() == *f {
+                    match args {
+                        [LispValue::Atom(ref name), ref value] => {
+                            new_world.set(name, value.clone());
+                            Ok(value.clone())
+                        },
+                        _ => Err("Invalid Everything".into())
+                    }
+                }
+                else if "quote".to_string() == *f {
+                    Ok(args[0].clone())
+                } else {
+                    match self.vtable.get(f) {
+                        Some(&LispValue::PrimitiveFunction(ref f)) =>
+                            self.eval_args(args).and_then(|args| (f.func)(&args)),
+                        Some(&LispValue::Atom(ref name)) => self.get(name),
+                        Some(&ref x) => Ok(x.clone()),
+                        None => Err(format!("No such function: {}", f))
+                    }
                 }
             },
             [ref f, ..] => Err(format!("{} is not a function.", f)),
             [] => Ok(LispValue::List(vec![]))
-        }
+        };
+        (result, new_world)
     }
 
     pub fn get(&self, identifier: &str) -> LispResult {
         match self.vtable.get(identifier) {
             Some(val) => Ok(val.clone()),
-            None      => Err("Undefined variable!".into())
+            None      => Err(format!("Undefined variable: '{}'!", identifier))
         }
     }
 
+    pub fn set(&mut self, name: &str, value: LispValue) {
+        self.vtable.insert(name.into(), value);
+    }
+
     fn eval_args(&self, args: &[LispValue]) ->  Result<Vec<LispValue>, String> {
-        args.iter().map(|arg| arg.eval_in(self)).collect()
+        args.iter().map(|arg| arg.eval_in(self).0).collect()
     }
 }
 
@@ -59,7 +80,6 @@ impl Default for LispEnvironment {
             "*" => |args| numeric_op(args, 1, &|a, e| a * e),
             "/" => div,
         );
-        vtable.insert("six".into(), LispValue::Number(6));
         LispEnvironment {vtable: vtable}
     }
 }

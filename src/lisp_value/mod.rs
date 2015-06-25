@@ -26,15 +26,15 @@ impl LispValue {
     }
 
     pub fn eval(&self) -> LispResult {
-        self.eval_in(&LispEnvironment::default())
+        self.eval_in(&LispEnvironment::default()).0
     }
 
-    pub fn eval_in(&self, world: &LispEnvironment) -> LispResult {
+    pub fn eval_in(&self, world: &LispEnvironment) -> (LispResult, LispEnvironment) {
         match *self {
             LispValue::List(ref v) |
             LispValue::DottedList(ref v, _) => world.call(v),
-            LispValue::Atom(ref v) => world.get(v),
-            _ => Ok(self.clone())
+            LispValue::Atom(ref v) => (world.get(v), world.clone()),
+            _ => (Ok(self.clone()), world.clone())
         }
     }
 }

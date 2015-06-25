@@ -7,6 +7,7 @@ mod lisp_environment;
 use std::io::{stdin, BufRead};
 
 pub use lisp_value::{LispValue, LispNum};
+use lisp_environment::LispEnvironment;
 pub use scheme::expression;
 
 peg_file! scheme("scheme.rustpeg");
@@ -18,9 +19,14 @@ fn read() -> String {
 }
 
 pub fn main() {
+    let mut world = LispEnvironment::default();
     loop {
         match expression(&read()) {
-            Ok(ast)  => println!("{:?}\n{:?}", ast, ast.eval()),
+            Ok(ast)  => {
+                let (result, new_world) = ast.eval_in(&world);
+                world = new_world;
+                println!("{:?}\n{:?}\n{:?}", ast, result, world)
+            },
             Err(err) => println!("{:?}", err),
         }
     }
