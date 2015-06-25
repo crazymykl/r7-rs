@@ -29,19 +29,16 @@ impl LispEnvironment {
         let mut new_world = self.clone();
         let result = match list {
             [LispValue::Atom(ref f), args..] => {
-                if "define".to_string() == *f {
-                    match args {
+                match &f[..] {
+                    "define" => match args {
                         [LispValue::Atom(ref name), ref value] => {
                             new_world.set(name, value.clone());
                             Ok(value.clone())
                         },
                         _ => Err("Invalid Everything".into())
-                    }
-                }
-                else if "quote".to_string() == *f {
-                    Ok(args[0].clone())
-                } else {
-                    match self.vtable.get(f) {
+                    },
+                    "quote" => Ok(args[0].clone()),
+                    _ => match self.vtable.get(f) {
                         Some(&LispValue::PrimitiveFunction(ref f)) =>
                             self.eval_args(args).and_then(|args| (f.func)(&args)),
                         Some(&LispValue::Atom(ref name)) => self.get(name),
