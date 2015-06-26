@@ -35,9 +35,33 @@ impl LispEnvironment {
                             new_world.set(name, value.clone());
                             Ok(value.clone())
                         },
-                        _ => Err("Invalid Everything".into())
+                        _ => Err("Invalid definition".into())
+                    },
+                    "set!" => match args {
+                        [LispValue::Atom(ref name), ref value] => {
+                            if new_world.defined(name) {
+                                new_world.set(name, value.clone());
+                                Ok(value.clone())
+                            } else {
+                                Err(format!("Undefined variable: '{}'", name))
+                            }
+                        },
+                        _ => Err("Invalid set!".into())
                     },
                     "quote" => Ok(args[0].clone()),
+                    "if" => match args {
+                        [ref predicate, ref consequent, ref alternate] => {
+                            let (result, tmp_world) = predicate.eval_in(&self);
+                            let branch = match result {
+                                Ok(LispValue::Boolean(false)) => alternate,
+                                Ok(_)                         => consequent,
+                                Err(_)                        => return (result, tmp_world)
+                            };
+
+                            return branch.eval_in(&tmp_world);
+                        },
+                        _ => Err("Bad 'if'".into())
+                    },
                     _ => match self.vtable.get(f) {
                         Some(&LispValue::PrimitiveFunction(ref f)) =>
                             self.eval_args(args).and_then(|args| (f.func)(&args)),
@@ -64,6 +88,10 @@ impl LispEnvironment {
         self.vtable.insert(name.into(), value);
     }
 
+    fn defined(&self, name: &str) -> bool {
+        self.vtable.contains_key(name.into())
+    }
+
     fn eval_args(&self, args: &[LispValue]) ->  Result<Vec<LispValue>, String> {
         args.iter().map(|arg| arg.eval_in(self).0).collect()
     }
@@ -75,6 +103,7 @@ impl Default for LispEnvironment {
             "+" => |args| numeric_op(args, 0, &|a, e| a + e),
             "-" => |args| numeric_op(args, 0, &|a, e| a - e),
             "*" => |args| numeric_op(args, 1, &|a, e| a * e),
+
             "/" => div,
         );
         LispEnvironment {vtable: vtable}
