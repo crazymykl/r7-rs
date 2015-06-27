@@ -103,7 +103,7 @@ impl Default for LispEnvironment {
             "+" => |args| numeric_op(args, 0, &|a, e| a + e),
             "-" => |args| numeric_op(args, 0, &|a, e| a - e),
             "*" => |args| numeric_op(args, 1, &|a, e| a * e),
-
+            "=" => equal,
             "/" => div,
         );
         LispEnvironment {vtable: vtable}
@@ -133,6 +133,14 @@ fn div(operands: &[LispValue]) -> LispResult {
             });
             std::result::fold(numbers, n, |a, e| a / e).map(LispValue::Number)
         }
+    }
+}
+
+fn equal(operands: &[LispValue]) -> LispResult {
+    match operands {
+        [ref first, ref second, ref rest..] =>
+            Ok(LispValue::Boolean(first == second && rest.iter().all(|e| e == first))),
+        _ => Err("Need at least two args to equality".into())
     }
 }
 

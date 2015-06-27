@@ -24,5 +24,7 @@ test_evaluation!(basics,
     "(+ 1 1)" => Number(2),
     "(/ (+ 4 2) 2)" => Number(3),
     "(- 3 -1)" => Number(4),
-    "(define six 6)", "(* six six)" => Number(36)
+    "(define six 6)", "(* six six)" => Number(36),
+    "(if (= 2 3) \"yay\" \"boo\")" => String("boo".into()),
+    "(if (= 2 2 2 2) \"yay\" \"boo\")" => String("yay".into())
 );
