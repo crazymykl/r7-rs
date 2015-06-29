@@ -70,6 +70,18 @@ impl LispEnvironment {
                         },
                         _ => Err("Invalid set!".into())
                     },
+                    "lambda" => match args {
+                        [LispValue::List(ref args), ref body..] =>
+                            Ok(LispValue::Function(LispFunction::new(
+                                &new_world, args, body))),
+                        [LispValue::DottedList(ref args, ref varargs), ref body..] =>
+                            Ok(LispValue::Function(LispFunction::new_with_varargs(
+                                &new_world, args, *varargs.clone(), body))),
+                        [ref varargs, ref body..] =>
+                            Ok(LispValue::Function(LispFunction::new_with_varargs(
+                                &new_world, &[], varargs.clone(), body))),
+                        _ => Err("Invalid lambda".into())
+                    },
                     "quote" => Ok(args[0].clone()),
                     "if" => match args {
                         [ref predicate, ref consequent, ref alternate] => {
