@@ -2,9 +2,11 @@ use std::fmt;
 use std::default::Default;
 
 pub mod primitive_function;
+pub mod lisp_function;
 
 use super::lisp_environment::LispEnvironment;
 pub use self::primitive_function::PrimitiveFunction;
+pub use self::lisp_function::LispFunction;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LispValue {
@@ -14,6 +16,7 @@ pub enum LispValue {
     Number(LispNum),
     String(String),
     PrimitiveFunction(PrimitiveFunction),
+    Function(LispFunction),
     Boolean(bool)
 }
 
@@ -22,7 +25,7 @@ pub type LispResult = Result<LispValue, String>;
 
 impl LispValue {
     pub fn quote(expression: LispValue) -> LispValue {
-        LispValue::List(vec![LispValue::Atom("quote".to_string()), expression])
+        LispValue::List(vec![LispValue::Atom("quote".into()), expression])
     }
 
     pub fn eval(&self) -> LispResult {
@@ -42,14 +45,15 @@ impl LispValue {
 impl fmt::Display for LispValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let string = match *self {
-            LispValue::Atom(ref x) => x.to_string(),
+            LispValue::Atom(ref x) => x.clone(),
             LispValue::List(ref x) => format!("({})", format_list(x)),
             LispValue::DottedList(ref x, ref y) => format!("({} . {})", format_list(x), y),
             LispValue::Number(x) => x.to_string(),
             LispValue::String(ref x) => format!("\"{}\"", x),
-            LispValue::PrimitiveFunction(_) => "<primitive function>".to_string(),
-            LispValue::Boolean(true) => "#t".to_string(),
-            LispValue::Boolean(false) => "#f".to_string(),
+            LispValue::PrimitiveFunction(_) => "<primitive function>".into(),
+            LispValue::Function(ref f) => format!("<function:({})", f.arg_list()),
+            LispValue::Boolean(true) => "#t".into(),
+            LispValue::Boolean(false) => "#f".into(),
         };
         write!(f, "{}", string)
     }
@@ -58,6 +62,6 @@ impl fmt::Display for LispValue {
 fn format_list(list: &Vec<LispValue>) -> String {
     list.iter()
         .map(|i| i.to_string())
-        .collect::<Vec<String>>()
+        .collect::<Vec<_>>()
         .connect(" ")
 }

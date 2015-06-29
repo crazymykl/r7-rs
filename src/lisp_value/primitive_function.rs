@@ -2,20 +2,24 @@ use lisp_value::{LispValue, LispResult};
 use std::rc::Rc;
 use std::fmt;
 
-pub type LispFunction = Rc<Fn(&[LispValue]) -> LispResult>;
+pub type LispPrimitiveFunction = Rc<Fn(&[LispValue]) -> LispResult>;
 
 #[derive(Clone)]
 pub struct PrimitiveFunction {
     name: String,
-    pub func: LispFunction
+    func: LispPrimitiveFunction
 }
 
 impl PrimitiveFunction {
-    pub fn new(name: &str, function: LispFunction) -> PrimitiveFunction {
+    pub fn new(name: &str, function: LispPrimitiveFunction) -> PrimitiveFunction {
         PrimitiveFunction {
             name: name.to_string(),
             func: function
         }
+    }
+
+    pub fn call(&self, args: &[LispValue]) -> LispResult {
+        (self.func)(args)
     }
 }
 
