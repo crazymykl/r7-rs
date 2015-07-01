@@ -54,16 +54,56 @@ impl LispEnvironment {
                             }
                         },
                         [LispValue::Atom(ref name), ref value] => {
-                            new_world.set(name, value.clone());
-                            Ok(value.clone())
+                            let val = match value {
+                                &LispValue::Atom(ref x) => {
+                                    let y = self.get(x);
+                                    if let Ok(z) = y {
+                                        z
+                                    } else {
+                                        return (y, new_world);
+                                    }
+                                },
+                                &LispValue::List(ref f) |
+                                &LispValue::DottedList(ref f, _) => {
+                                    let y = self.call(f).0;
+                                    if let Ok(z) = y {
+                                        z
+                                    } else {
+                                        return (y, new_world);
+                                    }
+                                }
+                                _ => value.clone()
+                            };
+                            new_world.set(name, val.clone());
+                            Ok(val.clone())
                         },
                         _ => Err("Invalid definition".into())
                     },
                     "set!" => match args {
                         [LispValue::Atom(ref name), ref value] => {
                             if new_world.defined(name) {
-                                new_world.set(name, value.clone());
-                                Ok(value.clone())
+                                let val = match value {
+                                    &LispValue::Atom(ref x) => {
+                                        let y = self.get(x);
+                                        if let Ok(z) = y {
+                                            z
+                                        } else {
+                                            return (y, new_world);
+                                        }
+                                    },
+                                    &LispValue::List(ref f) |
+                                    &LispValue::DottedList(ref f, _) => {
+                                        let y = self.call(f).0;
+                                        if let Ok(z) = y {
+                                            z
+                                        } else {
+                                            return (y, new_world);
+                                        }
+                                    }
+                                    _ => value.clone()
+                                };
+                                new_world.set(name, val.clone());
+                                Ok(val.clone())
                             } else {
                                 Err(format!("Undefined variable: '{}'", name))
                             }
@@ -101,10 +141,25 @@ impl LispEnvironment {
                             self.eval_args(args).and_then(|args| f.call(&args)),
                         Some(&LispValue::Function(ref f)) =>
                             self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
-                        Some(&LispValue::Atom(ref name)) => self.get(name),
-                        Some(&ref x) => Ok(x.clone()),
+                        Some(&ref x) => Err(format!("No such function: {}", x)),
                         None => Err(format!("No such function: {}", f))
                     }
+                }
+            },
+            [LispValue::PrimitiveFunction(ref f), args..] =>
+                self.eval_args(args).and_then(|args| f.call(&args)),
+            [LispValue::Function(ref f), args..] =>
+                self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
+            [LispValue::List(ref f), args..] |
+            [LispValue::DottedList(ref f, _), args..] => {
+                let val = new_world.call(f).0;
+                if let Ok(value) = val {
+                    let mut new_list = vec![value];
+                    new_list.push_all(args);
+                    println!("!!! {:?}", new_list);
+                    return new_world.call(&new_list);
+                } else {
+                    val
                 }
             },
             [ref f, ..] => Err(format!("{} is not a function.", f)),

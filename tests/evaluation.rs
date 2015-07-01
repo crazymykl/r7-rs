@@ -28,5 +28,6 @@ test_evaluation!(basics,
     "(if (= 2 3) \"yay\" \"boo\")" => String("boo".into()),
     "(if (= 2 2 2 2) \"yay\" \"boo\")" => String("yay".into()),
     "(define (list . xs) xs)", "(list 1 2)" => List(vec![Number(1), Number(2)]),
+    "((if 2 - +) 2 1)" => Number(1),
     "(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))", "(fact 6)" => Number(720)
 );

@@ -1,4 +1,4 @@
-#![feature(plugin, box_syntax, slice_patterns, unboxed_closures, result_fold)]
+#![feature(plugin, box_syntax, slice_patterns, unboxed_closures, result_fold, vec_push_all)]
 #![plugin(peg_syntax_ext)]
 
 mod lisp_value;
@@ -25,7 +25,7 @@ pub fn main() {
             Ok(ast)  => {
                 let (result, new_world) = ast.eval_in(&world);
                 world = new_world;
-                println!("{:?}\n{:?}\n{:?}", ast, result, world)
+                println!("{:?}\n{:?}", ast, result)
             },
             Err(err) => println!("{:?}", err),
         }
