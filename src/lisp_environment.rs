@@ -156,7 +156,6 @@ impl LispEnvironment {
                 if let Ok(value) = val {
                     let mut new_list = vec![value];
                     new_list.push_all(args);
-                    println!("!!! {:?}", new_list);
                     return new_world.call(&new_list);
                 } else {
                     val

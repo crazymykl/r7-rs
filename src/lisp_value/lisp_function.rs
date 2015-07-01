@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use lisp_value::{LispValue, LispResult};
 use lisp_environment::LispEnvironment;
 
@@ -6,7 +9,7 @@ pub struct LispFunction {
     args: Vec<String>,
     varargs: Option<String>,
     body: Vec<LispValue>,
-    closure: LispEnvironment
+    closure: Rc<RefCell<LispEnvironment>>
 }
 
 impl LispFunction {
@@ -15,7 +18,7 @@ impl LispFunction {
             args: args.iter().map(|x| x.to_string()).collect(),
             varargs: None,
             body: body.iter().map(|x| x.clone()).collect(),
-            closure: env.clone()
+            closure: Rc::new(RefCell::new(env.clone()))
         }
     }
 
@@ -25,7 +28,7 @@ impl LispFunction {
             args: args.iter().map(|x| x.to_string()).collect(),
             varargs: Some(varargs.to_string()),
             body: body.iter().map(|x| x.clone()).collect(),
-            closure: env.clone()
+            closure: Rc::new(RefCell::new(env.clone()))
         }
     }
 
@@ -38,8 +41,8 @@ impl LispFunction {
         format!("{}{}", self.args.connect(", "), varargs)
     }
 
-    pub fn call(&self, env: &LispEnvironment, params: &[LispValue]) -> LispResult {
-        let mut env = env.merge(&self.closure);
+    pub fn call(&self, src_env: &LispEnvironment, params: &[LispValue]) -> LispResult {
+        let mut env = src_env.merge(&self.closure.borrow());
 
         for (name, value) in self.args.iter().zip(params) {
             env.set(name, value.clone());
@@ -53,6 +56,10 @@ impl LispFunction {
             env.set(name, LispValue::List(values))
         }
 
-        env.eval_many(&self.body).0
+        let (result, world) = env.eval_many(&self.body);
+        let mut new_env = self.closure.borrow_mut();
+        *new_env = world;
+        result
     }
+
 }

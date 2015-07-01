@@ -4,7 +4,7 @@
 mod lisp_value;
 mod lisp_environment;
 
-use std::io::{stdin, BufRead};
+use std::io::{stdin, stdout, BufRead, Write};
 
 pub use lisp_value::{LispValue, LispNum};
 pub use lisp_environment::LispEnvironment;
@@ -21,11 +21,17 @@ fn read() -> String {
 pub fn main() {
     let mut world = LispEnvironment::default();
     loop {
+        print!(">>> ");
+        stdout().flush().unwrap();
         match expression(&read()) {
             Ok(ast)  => {
                 let (result, new_world) = ast.eval_in(&world);
                 world = new_world;
-                println!("{:?}\n{:?}", ast, result)
+                println!("{:?}", ast);
+                match result {
+                    Ok(cool) => println!("<<< {}", cool),
+                    Err(or)  => println!("ERR {}", or)
+                }
             },
             Err(err) => println!("{:?}", err),
         }
