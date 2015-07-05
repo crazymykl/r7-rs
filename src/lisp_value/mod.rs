@@ -51,7 +51,7 @@ impl fmt::Display for LispValue {
             LispValue::Number(x) => x.to_string(),
             LispValue::String(ref x) => format!("\"{}\"", x),
             LispValue::PrimitiveFunction(_) => "<primitive function>".into(),
-            LispValue::Function(ref f) => format!("<function:({})", f.arg_list()),
+            LispValue::Function(ref f) => format!("<function:({})>", f.arg_list()),
             LispValue::Boolean(true) => "#t".into(),
             LispValue::Boolean(false) => "#f".into(),
         };

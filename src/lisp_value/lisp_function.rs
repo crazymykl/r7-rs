@@ -17,7 +17,7 @@ impl LispFunction {
         LispFunction {
             args: args.iter().map(|x| x.to_string()).collect(),
             varargs: None,
-            body: body.iter().map(|x| x.clone()).collect(),
+            body: body.iter().cloned().collect(),
             closure: Rc::new(RefCell::new(env.clone()))
         }
     }
@@ -27,7 +27,7 @@ impl LispFunction {
         LispFunction {
             args: args.iter().map(|x| x.to_string()).collect(),
             varargs: Some(varargs.to_string()),
-            body: body.iter().map(|x| x.clone()).collect(),
+            body: body.iter().cloned().collect(),
             closure: Rc::new(RefCell::new(env.clone()))
         }
     }
@@ -51,7 +51,7 @@ impl LispFunction {
         if let Some(ref name) = self.varargs {
             let values = params.iter()
                 .skip(self.args.len())
-                .map(|v| v.clone())
+                .cloned()
                 .collect::<Vec<_>>();
             env.set(name, LispValue::List(values))
         }
