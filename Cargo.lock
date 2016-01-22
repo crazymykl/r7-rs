@@ -2,11 +2,11 @@
 name = "r7-rs"
 version = "0.0.1"
 dependencies = [
- "peg 0.3.0 (git+https://github.com/kevinmehall/rust-peg)",
+ "peg 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "peg"
-version = "0.3.0"
-source = "git+https://github.com/kevinmehall/rust-peg#fc49125552f43509c7c5a87ee094a592152f3231"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 

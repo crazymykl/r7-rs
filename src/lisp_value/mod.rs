@@ -63,5 +63,5 @@ fn format_list(list: &Vec<LispValue>) -> String {
     list.iter()
         .map(|i| i.to_string())
         .collect::<Vec<_>>()
-        .connect(" ")
+        .join(" ")
 }

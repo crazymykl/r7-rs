@@ -6,5 +6,5 @@ authors = ["Mike MacDonald (crazymykl) <crazymykl@gmail.com>"]
 [lib]
 name = "r7rs"
 
-[dependencies.peg]
-git = "https://github.com/kevinmehall/rust-peg"
+[dependencies]
+peg = "0.3.8"

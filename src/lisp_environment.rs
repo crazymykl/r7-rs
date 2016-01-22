@@ -1,4 +1,3 @@
-use std;
 use std::rc::Rc;
 use std::collections::HashMap;
 use std::default::Default;
@@ -155,7 +154,7 @@ impl LispEnvironment {
                 let val = new_world.call(f).0;
                 if let Ok(value) = val {
                     let mut new_list = vec![value];
-                    new_list.push_all(args);
+                    new_list.extend_from_slice(args);
                     return new_world.call(&new_list);
                 } else {
                     val
@@ -233,7 +232,7 @@ fn numeric_op(operands: &[LispValue],
     let mut numbers = operands.iter().map(assert_numericality);
     let initial = try!(numbers.next().unwrap_or(Ok(fallback)));
     if numbers.len() == 0 { return Ok(LispValue::Number(fold(fallback, initial))); }
-    std::result::fold(numbers, initial, |a, e| fold(a, e)).map(LispValue::Number)
+    result_fold(numbers, initial, |a, e| fold(a, e)).map(LispValue::Number)
 }
 
 fn div(operands: &[LispValue]) -> LispResult {
@@ -248,7 +247,7 @@ fn div(operands: &[LispValue]) -> LispResult {
                 0 => Err("Cannot divide by zero.".into()),
                 x => Ok(x),
             });
-            std::result::fold(numbers, n, |a, e| a / e).map(LispValue::Number)
+            result_fold(numbers, n, |a, e| a / e).map(LispValue::Number)
         }
     }
 }
@@ -266,4 +265,22 @@ fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
         LispValue::Number(n) => Ok(n),
         _ => Err(format!("Non-numeric operand: {}", item)),
     }
+}
+
+fn result_fold<T,
+            V,
+            E,
+            F: FnMut(V, T) -> V,
+            Iter: Iterator<Item=Result<T, E>>>(
+            iterator: Iter,
+            mut init: V,
+            mut f: F)
+            -> Result<V, E> {
+    for t in iterator {
+        match t {
+            Ok(v) => init = f(init, v),
+            Err(u) => return Err(u)
+        }
+    }
+    Ok(init)
 }

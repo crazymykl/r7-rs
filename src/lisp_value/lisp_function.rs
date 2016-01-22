@@ -38,7 +38,7 @@ impl LispFunction {
             None           => "".into()
         };
 
-        format!("{}{}", self.args.connect(", "), varargs)
+        format!("{}{}", self.args.join(", "), varargs)
     }
 
     pub fn call(&self, src_env: &LispEnvironment, params: &[LispValue]) -> LispResult {
