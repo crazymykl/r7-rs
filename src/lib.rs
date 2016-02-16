@@ -1,6 +1,8 @@
 #![feature(plugin, box_syntax, slice_patterns, unboxed_closures)]
 #![plugin(peg_syntax_ext)]
 
+extern crate num;
+
 mod lisp_value;
 mod lisp_environment;
 

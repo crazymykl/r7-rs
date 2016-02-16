@@ -8,3 +8,4 @@ name = "r7rs"
 
 [dependencies]
 peg = "0.3.8"
+num = "0.1.0"

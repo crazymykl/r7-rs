@@ -2,9 +2,11 @@
 
 extern crate r7rs;
 
-use r7rs::LispValue;
-use r7rs::LispValue::*;
+mod shared;
+
+use shared::*;
 use r7rs::expression;
+use r7rs::LispValue::*;
 
 macro_rules! test_parsing {
     ($name:ident, $($inp:expr => $out:expr),+) => (
@@ -15,16 +17,13 @@ macro_rules! test_parsing {
     );
 }
 
-fn atom(ident: &str) -> LispValue {
-    Atom(ident.to_string())
-}
-
-fn string(string: &str) -> LispValue {
-    String(string.to_string())
-}
-
 test_parsing!(atoms,
     "foo" => atom("foo")
+);
+
+test_parsing!(quoting,
+    "'foo" => List(vec![atom("quote"), atom("foo")]),
+    "(foo 'bar)" => List(vec![atom("foo"), List(vec![atom("quote"), atom("bar")])])
 );
 
 test_parsing!(lists,
@@ -36,8 +35,11 @@ test_parsing!(dotted_lists,
 );
 
 test_parsing!(numbers,
-    "13" => Number(13),
-    "-6" => Number(-6)
+    "13" => number(13),
+    "-6" => number(-6),
+    "4.0" => number(4),
+    ".0" => number(0),
+    "-9/3" => number(-3)
 );
 
 test_parsing!(strings,

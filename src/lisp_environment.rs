@@ -1,6 +1,8 @@
 use std::rc::Rc;
 use std::collections::HashMap;
 use std::default::Default;
+
+use num::{Zero, One};
 use super::lisp_value::{LispValue, LispResult, LispNum, LispFunction, PrimitiveFunction};
 
 type LispVtable = HashMap<String, LispValue>;
@@ -216,9 +218,9 @@ impl LispEnvironment {
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
         let vtable = lisp_funcs!(
-            "+" => |args| numeric_op(args, 0, &|a, e| a + e),
-            "-" => |args| numeric_op(args, 0, &|a, e| a - e),
-            "*" => |args| numeric_op(args, 1, &|a, e| a * e),
+            "+" => |args| numeric_op(args, LispNum::zero(), &|a, e| a + e),
+            "-" => |args| numeric_op(args, LispNum::zero(), &|a, e| a - e),
+            "*" => |args| numeric_op(args, LispNum::one(), &|a, e| a * e),
             "=" => equal,
             "/" => div,
         );
@@ -230,24 +232,32 @@ fn numeric_op(operands: &[LispValue],
               fallback: LispNum,
               fold: &Fn(LispNum, LispNum) -> LispNum) -> LispResult {
     let mut numbers = operands.iter().map(assert_numericality);
-    let initial = try!(numbers.next().unwrap_or(Ok(fallback)));
-    if numbers.len() == 0 { return Ok(LispValue::Number(fold(fallback, initial))); }
+    let initial = try!(numbers.next().unwrap_or_else(|| Ok(fallback.clone())));
+    if numbers.len() == 0 { return Ok(LispValue::Number(fold(fallback.clone(), initial))); }
     result_fold(numbers, initial, |a, e| fold(a, e)).map(LispValue::Number)
 }
 
 fn div(operands: &[LispValue]) -> LispResult {
     let numbers: Vec<LispNum> = try!(operands.iter().map(assert_numericality).collect());
+    let zero: LispNum = LispNum::zero();
+
     match &numbers[..] {
         []  => Err("Not enough arguments.".into()),
-        [0] => Err("Cannot divide by zero.".into()),
-        [n] => Ok(LispValue::Number(1 / n)),
-        [0, ..] => Ok(LispValue::Number(0)),
-        [n, rest..] => {
-            let numbers = rest.iter().map(|item| match *item {
-                0 => Err("Cannot divide by zero.".into()),
-                x => Ok(x),
-            });
-            result_fold(numbers, n, |a, e| a / e).map(LispValue::Number)
+        [ref n] => if n.is_zero() {
+                Err("Cannot divide by zero.".into())
+            } else {
+                Ok(LispValue::Number(LispNum::one() / n))
+            },
+        [ref n, rest..] => {
+            if n.is_zero() { return Ok(LispValue::Number(zero)) }
+            let numbers = rest.iter().map(|item|
+                if item.is_zero() {
+                    Err("Cannot divide by zero.".into())
+                } else {
+                    Ok(item)
+                }
+            );
+            result_fold(numbers, n.clone(), |a, e| a / e).map(LispValue::Number)
         }
     }
 }
@@ -262,7 +272,7 @@ fn equal(operands: &[LispValue]) -> LispResult {
 
 fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
     match *item {
-        LispValue::Number(n) => Ok(n),
+        LispValue::Number(ref n) => Ok(n.clone()),
         _ => Err(format!("Non-numeric operand: {}", item)),
     }
 }
