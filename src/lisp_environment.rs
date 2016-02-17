@@ -218,11 +218,15 @@ impl LispEnvironment {
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
         let vtable = lisp_funcs!(
-            "+" => |args| numeric_op(args, LispNum::zero(), &|a, e| a + e),
-            "-" => |args| numeric_op(args, LispNum::zero(), &|a, e| a - e),
-            "*" => |args| numeric_op(args, LispNum::one(), &|a, e| a * e),
-            "=" => equal,
-            "/" => div,
+            "+"  => |args| numeric_op(args, LispNum::zero(), &|a, e| a + e),
+            "-"  => |args| numeric_op(args, LispNum::zero(), &|a, e| a - e),
+            "*"  => |args| numeric_op(args, LispNum::one(), &|a, e| a * e),
+            ">"  => |args| comparison_op(args, &|a, e| a > e),
+            "<"  => |args| comparison_op(args, &|a, e| a < e),
+            ">=" => |args| comparison_op(args, &|a, e| a >= e),
+            "<=" => |args| comparison_op(args, &|a, e| a <= e),
+            "="  => equal,
+            "/"  => div,
         );
         LispEnvironment {vtable: vtable}
     }
@@ -260,6 +264,20 @@ fn div(operands: &[LispValue]) -> LispResult {
             result_fold(numbers, n.clone(), |a, e| a / e).map(LispValue::Number)
         }
     }
+}
+
+fn comparison_op(operands: &[LispValue],
+               fold: &Fn(&LispNum, &LispNum) -> bool) -> LispResult {
+    let numbers: Vec<LispNum> = try!(operands.iter().map(assert_numericality).collect());
+    let len = numbers.len();
+    if len < 2 { return Err("Need at least two args to compare".into()); }
+
+    for i in 1..len {
+        if !fold(&numbers[i-1], &numbers[i]) {
+            return Ok(LispValue::Boolean(false));
+        }
+    }
+    Ok(LispValue::Boolean(true))
 }
 
 fn equal(operands: &[LispValue]) -> LispResult {

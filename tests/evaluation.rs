@@ -46,5 +46,8 @@ test_evaluation!(functions,
         "(define my-count (counter 5))",
         "(my-count 4)",
         "(my-count 4)" => number(13),
-    "(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))", "(fact 6)" => number(720)
+    "(define (fact n) (if (= n 0) 1 (* n (fact (- n 1)))))",
+        "(fact 6)" => number(720),
+    "(define (fib n) (if (<= n 2) 1 (+ (fib (- n 1)) (fib (- n 2)))))",
+        "(fib 10)" => number(55)
 );
