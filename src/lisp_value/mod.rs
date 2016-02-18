@@ -1,5 +1,6 @@
 use std::fmt;
 use std::default::Default;
+use num::rational;
 
 pub mod primitive_function;
 pub mod lisp_function;
@@ -20,7 +21,7 @@ pub enum LispValue {
     Boolean(bool)
 }
 
-pub type LispNum = i64;
+pub type LispNum = rational::BigRational;
 pub type LispResult = Result<LispValue, String>;
 
 impl LispValue {
@@ -48,7 +49,7 @@ impl fmt::Display for LispValue {
             LispValue::Atom(ref x) => x.clone(),
             LispValue::List(ref x) => format!("({})", format_list(x)),
             LispValue::DottedList(ref x, ref y) => format!("({} . {})", format_list(x), y),
-            LispValue::Number(x) => x.to_string(),
+            LispValue::Number(ref x) => x.to_string(),
             LispValue::String(ref x) => format!("\"{}\"", x),
             LispValue::PrimitiveFunction(_) => "<primitive function>".into(),
             LispValue::Function(ref f) => format!("<function:({})>", f.arg_list()),

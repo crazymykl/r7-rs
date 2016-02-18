@@ -5,7 +5,26 @@ expression -> LispValue
   = number / boolean / atom / string / quoted / listForm
 
 number -> LispValue
-  = "-"? digit+ { LispValue::Number(match_str.parse::<LispNum>().unwrap()) }
+  = decimal / ratio
+
+decimal -> LispValue
+  = "-"? ((digit+ "." digit*) / ("." digit+)) {
+    let parts = match_str.splitn(2, '.').collect::<Vec<&str>>();
+    let num = parts.concat().parse::<i64>().unwrap();
+    let denom = if let Some(frac) = parts.get(1) {
+      10u64.pow(frac.len() as u32)
+    } else {
+      1
+    };
+    let ratio = format!("{}/{}", num, denom);
+
+    LispValue::Number(ratio.parse::<LispNum>().unwrap())
+  }
+
+ratio -> LispValue
+  = "-"? digit+ ("/" digit+)? {
+    LispValue::Number(match_str.parse::<LispNum>().unwrap())
+  }
 
 boolean -> LispValue
   = true / false
