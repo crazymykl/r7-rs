@@ -85,3 +85,8 @@ letter = [a-zA-Z]
 digit = [0-9]
 
 symbol = [!#$%&|*+\-/:<=>?@^_~]
+
+#[pub]
+completeInput = whitespace* "'"? ((balancedParens .*) / [^()]*)
+
+balancedParens = "(" (("\"" ("\\\"" / [^"])* "\"") / balancedParens / [^)])* ")"

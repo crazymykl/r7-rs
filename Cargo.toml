@@ -9,3 +9,9 @@ name = "r7rs"
 [dependencies]
 peg = "0.3.8"
 num = "0.1.0"
+rustyline = "0.2.0"
+
+[features]
+# no features by default
+default = []
+show_ast = []
