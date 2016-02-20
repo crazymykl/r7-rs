@@ -29,13 +29,14 @@ pub fn main() {
     'outer: loop {
         match rl.readline(">>> ") {
             Ok(mut line) => {
+                if line.trim().is_empty() { continue }
                 rl.add_history_entry(&line);
                 while incomplete(&line) {
                     match rl.readline(">>* ") {
                         Ok(additional_line) => {
                             rl.add_history_entry(&additional_line);
                             line.push_str("\n");
-                            line.push_str(&additional_line.trim()) },
+                            line.push_str(&additional_line) },
                         Err(ReadlineError::Interrupted) |
                             Err(ReadlineError::Eof) => continue 'outer,
                         Err(err) => {

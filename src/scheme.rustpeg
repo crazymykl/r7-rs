@@ -58,7 +58,7 @@ dottedList -> LispValue
 dot = whitespace+ "." whitespace+
 
 listBody -> Vec<LispValue>
-  = expression ** whitespace
+  = expression ** (whitespace+)
 
 char -> String
   = escapeSequence / [^"] { match_str.to_string() }
