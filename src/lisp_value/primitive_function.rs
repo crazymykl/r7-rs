@@ -1,4 +1,5 @@
 use lisp_value::{LispValue, LispResult};
+use lisp_environment::LispEnvironment;
 use std::rc::Rc;
 use std::fmt;
 
@@ -7,18 +8,33 @@ pub type LispPrimitiveFunction = Rc<Fn(&[LispValue]) -> LispResult>;
 #[derive(Clone)]
 pub struct PrimitiveFunction {
     name: String,
+    args: Vec<String>,
+    varargs: Option<String>,
     func: LispPrimitiveFunction
 }
 
 impl PrimitiveFunction {
-    pub fn new(name: &str, function: LispPrimitiveFunction) -> PrimitiveFunction {
+    pub fn new(name: &str, args: &[&str], varargs: Option<String>,
+               function: LispPrimitiveFunction) -> PrimitiveFunction {
         PrimitiveFunction {
             name: name.to_string(),
+            args: args.iter().map(|&a| a.into()).collect(),
+            varargs: varargs,
             func: function
         }
     }
 
-    pub fn call(&self, args: &[LispValue]) -> LispResult {
+    pub fn arg_list(&self) -> String {
+        let mut args = self.args.clone();
+
+        if let Some(ref varargs) = self.varargs {
+            args.push(format!("{}...", varargs))
+        };
+
+        format!("{}", args.join(", "))
+    }
+
+    pub fn call(&self, _src_env: &LispEnvironment, args: &[LispValue]) -> LispResult {
         (self.func)(args)
     }
 }

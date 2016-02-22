@@ -8,9 +8,9 @@ number -> LispValue
   = decimal / ratio
 
 decimal -> LispValue
-  = "-"? ((digit+ "." digit*) / ("." digit+)) {
-    let parts = match_str.splitn(2, '.').collect::<Vec<&str>>();
-    let num = parts.concat().parse::<i64>().unwrap();
+  = [-+]? ((digit+ "." digit*) / ("." digit+)) {
+    let parts = match_str.splitn(2, '.').collect::<Vec<_>>();
+    let num = parts.concat().parse::<LispNum>().unwrap();
     let denom = if let Some(frac) = parts.get(1) {
       10u64.pow(frac.len() as u32)
     } else {
@@ -22,7 +22,7 @@ decimal -> LispValue
   }
 
 ratio -> LispValue
-  = "-"? digit+ ("/" digit+)? {
+  = [-+]? digit+ ("/" digit+)? {
     LispValue::Number(match_str.parse::<LispNum>().unwrap())
   }
 

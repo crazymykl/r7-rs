@@ -7,13 +7,22 @@ use super::lisp_value::{LispValue, LispResult, LispNum, LispFunction, PrimitiveF
 
 type LispVtable = HashMap<String, LispValue>;
 
+macro_rules! varargs {
+    (nil) => (None);
+    ($w:ident) => (Some(stringify!($w).into()));
+}
+
 macro_rules! lisp_funcs {
-    ($($name:expr => $definition:expr),+ $(,)*) => ({
+    ($($name:expr => [$($arg:ident),*], $varargs:ident, $definition:expr);+ $(;)*) => ({
         let mut env: LispVtable = HashMap::new();
         $(
             let name = $name;
             env.insert(name.into(), LispValue::PrimitiveFunction(
-                PrimitiveFunction::new(name, Rc::new($definition))
+                PrimitiveFunction::new(
+                    name,
+                    &[$(stringify!($arg).into()),*],
+                    varargs!($varargs),
+                    Rc::new($definition))
             ));
         )+
         env
@@ -139,7 +148,7 @@ impl LispEnvironment {
                     },
                     _ => match self.vtable.get(f) {
                         Some(&LispValue::PrimitiveFunction(ref f)) =>
-                            self.eval_args(args).and_then(|args| f.call(&args)),
+                            self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
                         Some(&LispValue::Function(ref f)) =>
                             self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
                         Some(&ref x) => Err(format!("No such function: {}", x)),
@@ -148,7 +157,7 @@ impl LispEnvironment {
                 }
             },
             [LispValue::PrimitiveFunction(ref f), args..] =>
-                self.eval_args(args).and_then(|args| f.call(&args)),
+                self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
             [LispValue::Function(ref f), args..] =>
                 self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
             [LispValue::List(ref f), args..] |
@@ -218,15 +227,16 @@ impl LispEnvironment {
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
         let vtable = lisp_funcs!(
-            "+"  => |args| numeric_op(args, LispNum::zero(), &|a, e| a + e),
-            "-"  => |args| numeric_op(args, LispNum::zero(), &|a, e| a - e),
-            "*"  => |args| numeric_op(args, LispNum::one(), &|a, e| a * e),
-            ">"  => |args| comparison_op(args, &|a, e| a > e),
-            "<"  => |args| comparison_op(args, &|a, e| a < e),
-            ">=" => |args| comparison_op(args, &|a, e| a >= e),
-            "<=" => |args| comparison_op(args, &|a, e| a <= e),
-            "="  => equal,
-            "/"  => div,
+            "+"    => [], xs, |args| numeric_op(args, LispNum::zero(), &|a, e| a + e);
+            "-"    => [], xs, |args| numeric_op(args, LispNum::zero(), &|a, e| a - e);
+            "*"    => [], xs, |args| numeric_op(args, LispNum::one(), &|a, e| a * e);
+            ">"    => [], xs, |args| comparison_op(args, &|a, e| a > e);
+            "<"    => [], xs, |args| comparison_op(args, &|a, e| a < e);
+            ">="   => [], xs, |args| comparison_op(args, &|a, e| a >= e);
+            "<="   => [], xs, |args| comparison_op(args, &|a, e| a <= e);
+            "="    => [], xs, |args| comparison_op(args, &|a, e| a == e);
+            "/"    => [x], xs, div;
+            "cons" => [car, cdr], nil, cons;
         );
         LispEnvironment {vtable: vtable}
     }
@@ -280,18 +290,27 @@ fn comparison_op(operands: &[LispValue],
     Ok(LispValue::Boolean(true))
 }
 
-fn equal(operands: &[LispValue]) -> LispResult {
-    match operands {
-        [ref first, ref second, ref rest..] =>
-            Ok(LispValue::Boolean(first == second && rest.iter().all(|e| e == first))),
-        _ => Err("Need at least two args to equality".into())
-    }
-}
-
 fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
     match *item {
         LispValue::Number(ref n) => Ok(n.clone()),
         _ => Err(format!("Non-numeric operand: {}", item)),
+    }
+}
+
+fn cons(operands: &[LispValue]) -> LispResult {
+    match operands {
+        [ref elt, LispValue::List(ref xs)] => {
+            let mut new_list = xs.clone();
+            new_list.insert(0, elt.clone());
+            Ok(LispValue::List(new_list))
+        },
+        [ref elt, LispValue::DottedList(ref xs, ref xlast)] => {
+            let mut new_list = xs.clone();
+            new_list.insert(0, elt.clone());
+            Ok(LispValue::DottedList(new_list, xlast.clone()))
+        },
+        [ref elt1, ref elt2] => Ok(LispValue::DottedList(vec![elt1.clone()], box elt2.clone())),
+        _ => unreachable!()
     }
 }
 

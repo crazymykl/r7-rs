@@ -38,8 +38,10 @@ test_parsing!(numbers,
     "13" => number(13),
     "-6" => number(-6),
     "4.0" => number(4),
-    ".0" => number(0),
-    "-9/3" => number(-3)
+    "-.0" => number(0),
+    "-9/3" => number(-3),
+    "+320/4" => number(80),
+    "+6.0" => number(6)
 );
 
 test_parsing!(strings,

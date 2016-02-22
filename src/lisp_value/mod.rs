@@ -51,7 +51,7 @@ impl fmt::Display for LispValue {
             LispValue::DottedList(ref x, ref y) => format!("({} . {})", format_list(x), y),
             LispValue::Number(ref x) => x.to_string(),
             LispValue::String(ref x) => format!("\"{}\"", x),
-            LispValue::PrimitiveFunction(_) => "<primitive function>".into(),
+            LispValue::PrimitiveFunction(ref f) => format!("<primitive function:({})>", f.arg_list()),
             LispValue::Function(ref f) => format!("<function:({})>", f.arg_list()),
             LispValue::Boolean(true) => "#t".into(),
             LispValue::Boolean(false) => "#f".into(),

@@ -33,12 +33,13 @@ impl LispFunction {
     }
 
     pub fn arg_list(&self) -> String {
-        let varargs = match self.varargs {
-            Some(ref name) => format!(" . {}", name),
-            None           => "".into()
+        let mut args = self.args.clone();
+
+        if let Some(ref varargs) = self.varargs {
+            args.push(format!("{}...", varargs))
         };
 
-        format!("{}{}", self.args.join(", "), varargs)
+        format!("{}", args.join(", "))
     }
 
     pub fn call(&self, src_env: &LispEnvironment, params: &[LispValue]) -> LispResult {
