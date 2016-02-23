@@ -147,19 +147,28 @@ impl LispEnvironment {
                         _ => Err("Bad 'if'".into())
                     },
                     _ => match self.vtable.get(f) {
-                        Some(&LispValue::PrimitiveFunction(ref f)) =>
-                            self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
+                        Some(&LispValue::PrimitiveFunction(ref f)) => {
+                            f.check_arity(args)
+                                .and_then(|args| self.eval_args(&args))
+                                .and_then(|args| f.call(&new_world, &args))
+                        },
                         Some(&LispValue::Function(ref f)) =>
-                            self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
+                            f.check_arity(args)
+                                .and_then(|args| self.eval_args(&args))
+                                .and_then(|args| f.call(&new_world, &args)),
                         Some(&ref x) => Err(format!("No such function: {}", x)),
                         None => Err(format!("No such function: {}", f))
                     }
                 }
             },
             [LispValue::PrimitiveFunction(ref f), args..] =>
-                self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
+                f.check_arity(args)
+                    .and_then(|args| self.eval_args(&args))
+                    .and_then(|args| f.call(&new_world, &args)),
             [LispValue::Function(ref f), args..] =>
-                self.eval_args(args).and_then(|args| f.call(&new_world, &args)),
+                f.check_arity(args)
+                    .and_then(|args| self.eval_args(&args))
+                    .and_then(|args| f.call(&new_world, &args)),
             [LispValue::List(ref f), args..] |
             [LispValue::DottedList(ref f, _), args..] => {
                 let val = new_world.call(f).0;
@@ -219,7 +228,7 @@ impl LispEnvironment {
         self.vtable.contains_key(name.into())
     }
 
-    fn eval_args(&self, args: &[LispValue]) ->  Result<Vec<LispValue>, String> {
+    fn eval_args(&self, args: &[LispValue]) -> Result<Vec<LispValue>, String> {
         args.iter().map(|arg| arg.eval_in(self).0).collect()
     }
 }

@@ -34,6 +34,19 @@ impl PrimitiveFunction {
         format!("{}", args.join(", "))
     }
 
+    pub fn check_arity(&self, args: &[LispValue]) -> Result<Vec<LispValue>, String> {
+        let (required, given) = (self.args.len(), args.len());
+
+        if given < required {
+            let at_least = if self.varargs.is_some() { "at least " } else { "" };
+            Err(format!("Not enough args ({} for {}{})", given, at_least, required))
+        } else if given > required && self.varargs.is_none() {
+            Err(format!("Too many args ({} for {})", given, required))
+        } else {
+            Ok(args.to_vec())
+        }
+    }
+
     pub fn call(&self, _src_env: &LispEnvironment, args: &[LispValue]) -> LispResult {
         (self.func)(args)
     }
