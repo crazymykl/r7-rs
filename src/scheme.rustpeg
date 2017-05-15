@@ -8,7 +8,7 @@ number -> LispValue
   = decimal / ratio
 
 decimal -> LispValue
-  = [-+]? ((digit+ "." digit*) / ("." digit+)) {
+  = match_str:$([-+]? ((digit+ "." digit*) / ("." digit+))) {
     let parts = match_str.splitn(2, '.').collect::<Vec<_>>();
     let num = parts.concat().parse::<LispNum>().unwrap();
     let denom = if let Some(frac) = parts.get(1) {
@@ -22,7 +22,7 @@ decimal -> LispValue
   }
 
 ratio -> LispValue
-  = [-+]? digit+ ("/" digit+)? {
+  = match_str:$([-+]? digit+ ("/" digit+)?) {
     LispValue::Number(match_str.parse::<LispNum>().unwrap())
   }
 
@@ -36,7 +36,7 @@ false -> LispValue
   = "#" ("false" / "f") { LispValue::Boolean(false) }
 
 atom -> LispValue
-  = (letter / symbol) (letter / digit / symbol / [.@])* {
+  = match_str:$((letter / symbol) (letter / digit / symbol / [.@])*) {
       LispValue::Atom(match_str.to_string())
   }
 
@@ -61,10 +61,10 @@ listBody -> Vec<LispValue>
   = expression ** (whitespace+)
 
 char -> String
-  = escapeSequence / [^"] { match_str.to_string() }
+  = match_str:$(escapeSequence / [^"]) { match_str.to_string() }
 
 escapeSequence -> String
-  = "\\" ["\/bntrf] {
+  = match_str:$("\\" ["\/bntrf]) {
       match match_str {
           "\\\"" => "\"",
           "\\\\" => "\\",

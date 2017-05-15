@@ -20,7 +20,7 @@ peg_file! scheme("scheme.rustpeg");
 
 pub fn main() {
     let mut world = LispEnvironment::default();
-    let mut rl = Editor::new();
+    let mut rl = Editor::<()>::new();
 
     if let Err(_) = rl.load_history(HISTORY_FILE) {
         println!("No previous history.");

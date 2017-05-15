@@ -37,13 +37,13 @@ pub struct LispEnvironment {
 impl LispEnvironment {
     pub fn call(&self, list: &[LispValue]) -> (LispResult, LispEnvironment) {
         let mut new_world = self.clone();
-        let result = match list {
-            [LispValue::Atom(ref f), args..] => {
+        let result = match *list {
+            [LispValue::Atom(ref f), ref args..] => {
                 match &f[..] {
-                    "define" => match args {
+                    "define" => match *args {
                         [LispValue::List(ref args), ref body..] => {
-                            match &args[..] {
-                                [LispValue::Atom(ref name), args..] => {
+                            match args[..] {
+                                [LispValue::Atom(ref name), ref args..] => {
                                     let func = LispValue::Function(
                                         LispFunction::new(&new_world, args, body));
                                     new_world.set(name, func.clone());
@@ -53,8 +53,8 @@ impl LispEnvironment {
                             }
                         },
                         [LispValue::DottedList(ref args, ref varargs), ref body..] => {
-                            match &args[..] {
-                                [LispValue::Atom(ref name), args..] => {
+                            match args[..] {
+                                [LispValue::Atom(ref name), ref args..] => {
                                     let func = LispValue::Function(LispFunction::new_with_varargs(
                                         &new_world, args, *varargs.clone(), body));
                                     new_world.set(name, func.clone());
@@ -89,7 +89,7 @@ impl LispEnvironment {
                         },
                         _ => Err("Invalid definition".into())
                     },
-                    "set!" => match args {
+                    "set!" => match *args {
                         [LispValue::Atom(ref name), ref value] => {
                             if new_world.defined(name) {
                                 let val = match value {
@@ -120,7 +120,7 @@ impl LispEnvironment {
                         },
                         _ => Err("Invalid set!".into())
                     },
-                    "lambda" => match args {
+                    "lambda" => match *args {
                         [LispValue::List(ref args), ref body..] =>
                             Ok(LispValue::Function(LispFunction::new(
                                 &new_world, args, body))),
@@ -133,7 +133,7 @@ impl LispEnvironment {
                         _ => Err("Invalid lambda".into())
                     },
                     "quote" => Ok(args[0].clone()),
-                    "if" => match args {
+                    "if" => match *args {
                         [ref predicate, ref consequent, ref alternate] => {
                             let (result, tmp_world) = predicate.eval_in(&self);
                             let branch = match result {
@@ -148,12 +148,12 @@ impl LispEnvironment {
                     },
                     _ => match self.vtable.get(f) {
                         Some(&LispValue::PrimitiveFunction(ref f)) => {
-                            f.check_arity(args)
+                            f.check_arity(&args)
                                 .and_then(|args| self.eval_args(&args))
                                 .and_then(|args| f.call(&new_world, &args))
                         },
                         Some(&LispValue::Function(ref f)) =>
-                            f.check_arity(args)
+                            f.check_arity(&args)
                                 .and_then(|args| self.eval_args(&args))
                                 .and_then(|args| f.call(&new_world, &args)),
                         Some(&ref x) => Err(format!("No such function: {}", x)),
@@ -161,16 +161,16 @@ impl LispEnvironment {
                     }
                 }
             },
-            [LispValue::PrimitiveFunction(ref f), args..] =>
+            [LispValue::PrimitiveFunction(ref f), ref args..] =>
                 f.check_arity(args)
                     .and_then(|args| self.eval_args(&args))
                     .and_then(|args| f.call(&new_world, &args)),
-            [LispValue::Function(ref f), args..] =>
+            [LispValue::Function(ref f), ref args..] =>
                 f.check_arity(args)
                     .and_then(|args| self.eval_args(&args))
                     .and_then(|args| f.call(&new_world, &args)),
-            [LispValue::List(ref f), args..] |
-            [LispValue::DottedList(ref f, _), args..] => {
+            [LispValue::List(ref f), ref args..] |
+            [LispValue::DottedList(ref f, _), ref args..] => {
                 let val = new_world.call(f).0;
                 if let Ok(value) = val {
                     let mut new_list = vec![value];
@@ -264,14 +264,14 @@ fn div(operands: &[LispValue]) -> LispResult {
     let numbers: Vec<LispNum> = try!(operands.iter().map(assert_numericality).collect());
     let zero: LispNum = LispNum::zero();
 
-    match &numbers[..] {
+    match numbers[..] {
         []  => Err("Not enough arguments.".into()),
         [ref n] => if n.is_zero() {
                 Err("Cannot divide by zero.".into())
             } else {
                 Ok(LispValue::Number(LispNum::one() / n))
             },
-        [ref n, rest..] => {
+        [ref n, ref rest..] => {
             if n.is_zero() { return Ok(LispValue::Number(zero)) }
             let numbers = rest.iter().map(|item|
                 if item.is_zero() {
@@ -307,7 +307,7 @@ fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {
 }
 
 fn cons(operands: &[LispValue]) -> LispResult {
-    match operands {
+    match *operands {
         [ref elt, LispValue::List(ref xs)] => {
             let mut new_list = xs.clone();
             new_list.insert(0, elt.clone());

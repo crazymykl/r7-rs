@@ -7,9 +7,10 @@ authors = ["Mike MacDonald (crazymykl) <crazymykl@gmail.com>"]
 name = "r7rs"
 
 [dependencies]
-peg = "0.3.8"
+peg = "0.5.3"
+peg-syntax-ext = "0.5.0"
 num = "0.1.0"
-rustyline = "0.2.0"
+rustyline = "1.0.0"
 
 [features]
 default = []
