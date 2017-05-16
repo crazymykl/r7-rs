@@ -64,8 +64,8 @@ impl LispEnvironment {
                             }
                         },
                         [LispValue::Atom(ref name), ref value] => {
-                            let val = match value {
-                                &LispValue::Atom(ref x) => {
+                            let val = match *value {
+                                LispValue::Atom(ref x) => {
                                     let y = self.get(x);
                                     if let Ok(z) = y {
                                         z
@@ -73,8 +73,8 @@ impl LispEnvironment {
                                         return (y, new_world);
                                     }
                                 },
-                                &LispValue::List(ref f) |
-                                &LispValue::DottedList(ref f, _) => {
+                                LispValue::List(ref f) |
+                                LispValue::DottedList(ref f, _) => {
                                     let y = self.call(f).0;
                                     if let Ok(z) = y {
                                         z
@@ -92,8 +92,8 @@ impl LispEnvironment {
                     "set!" => match *args {
                         [LispValue::Atom(ref name), ref value] => {
                             if new_world.defined(name) {
-                                let val = match value {
-                                    &LispValue::Atom(ref x) => {
+                                let val = match *value {
+                                    LispValue::Atom(ref x) => {
                                         let y = self.get(x);
                                         if let Ok(z) = y {
                                             z
@@ -101,8 +101,8 @@ impl LispEnvironment {
                                             return (y, new_world);
                                         }
                                     },
-                                    &LispValue::List(ref f) |
-                                    &LispValue::DottedList(ref f, _) => {
+                                    LispValue::List(ref f) |
+                                    LispValue::DottedList(ref f, _) => {
                                         let y = self.call(f).0;
                                         if let Ok(z) = y {
                                             z
@@ -135,7 +135,7 @@ impl LispEnvironment {
                     "quote" => Ok(args[0].clone()),
                     "if" => match *args {
                         [ref predicate, ref consequent, ref alternate] => {
-                            let (result, tmp_world) = predicate.eval_in(&self);
+                            let (result, tmp_world) = predicate.eval_in(self);
                             let branch = match result {
                                 Ok(LispValue::Boolean(false)) => alternate,
                                 Ok(_)                         => consequent,
@@ -148,12 +148,12 @@ impl LispEnvironment {
                     },
                     _ => match self.vtable.get(f) {
                         Some(&LispValue::PrimitiveFunction(ref f)) => {
-                            f.check_arity(&args)
+                            f.check_arity(args)
                                 .and_then(|args| self.eval_args(&args))
                                 .and_then(|args| f.call(&new_world, &args))
                         },
                         Some(&LispValue::Function(ref f)) =>
-                            f.check_arity(&args)
+                            f.check_arity(args)
                                 .and_then(|args| self.eval_args(&args))
                                 .and_then(|args| f.call(&new_world, &args)),
                         Some(&ref x) => Err(format!("No such function: {}", x)),
@@ -236,9 +236,9 @@ impl LispEnvironment {
 impl Default for LispEnvironment {
     fn default() -> LispEnvironment {
         let vtable = lisp_funcs!(
-            "+"    => [], xs, |args| numeric_op(args, LispNum::zero(), &|a, e| a + e);
-            "-"    => [], xs, |args| numeric_op(args, LispNum::zero(), &|a, e| a - e);
-            "*"    => [], xs, |args| numeric_op(args, LispNum::one(), &|a, e| a * e);
+            "+"    => [], xs, |args| numeric_op(args, &LispNum::zero(), &|a, e| a + e);
+            "-"    => [], xs, |args| numeric_op(args, &LispNum::zero(), &|a, e| a - e);
+            "*"    => [], xs, |args| numeric_op(args, &LispNum::one(), &|a, e| a * e);
             ">"    => [], xs, |args| comparison_op(args, &|a, e| a > e);
             "<"    => [], xs, |args| comparison_op(args, &|a, e| a < e);
             ">="   => [], xs, |args| comparison_op(args, &|a, e| a >= e);
@@ -252,12 +252,12 @@ impl Default for LispEnvironment {
 }
 
 fn numeric_op(operands: &[LispValue],
-              fallback: LispNum,
+              fallback: &LispNum,
               fold: &Fn(LispNum, LispNum) -> LispNum) -> LispResult {
     let mut numbers = operands.iter().map(assert_numericality);
     let initial = try!(numbers.next().unwrap_or_else(|| Ok(fallback.clone())));
     if numbers.len() == 0 { return Ok(LispValue::Number(fold(fallback.clone(), initial))); }
-    result_fold(numbers, initial, |a, e| fold(a, e)).map(LispValue::Number)
+    result_fold(numbers, initial, fold).map(LispValue::Number)
 }
 
 fn div(operands: &[LispValue]) -> LispResult {
@@ -288,15 +288,10 @@ fn div(operands: &[LispValue]) -> LispResult {
 fn comparison_op(operands: &[LispValue],
                fold: &Fn(&LispNum, &LispNum) -> bool) -> LispResult {
     let numbers: Vec<LispNum> = try!(operands.iter().map(assert_numericality).collect());
-    let len = numbers.len();
-    if len < 2 { return Err("Need at least two args to compare".into()); }
+    if numbers.len() < 2 { return Err("Need at least two args to compare".into()); }
+    let val = numbers.iter().zip(&numbers[1..]).all(|(a, b)| fold(a, b));
 
-    for i in 1..len {
-        if !fold(&numbers[i-1], &numbers[i]) {
-            return Ok(LispValue::Boolean(false));
-        }
-    }
-    Ok(LispValue::Boolean(true))
+    Ok(LispValue::Boolean(val))
 }
 
 fn assert_numericality(item: &LispValue) -> Result<LispNum, String> {

@@ -60,7 +60,7 @@ impl fmt::Display for LispValue {
     }
 }
 
-fn format_list(list: &Vec<LispValue>) -> String {
+fn format_list(list: &[LispValue]) -> String {
     list.iter()
         .map(|i| i.to_string())
         .collect::<Vec<_>>()

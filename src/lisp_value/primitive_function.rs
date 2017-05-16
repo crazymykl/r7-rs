@@ -31,7 +31,7 @@ impl PrimitiveFunction {
             args.push(format!("{}...", varargs))
         };
 
-        format!("{}", args.join(", "))
+        args.join(", ")
     }
 
     pub fn check_arity(&self, args: &[LispValue]) -> Result<Vec<LispValue>, String> {

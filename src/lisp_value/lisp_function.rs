@@ -17,7 +17,7 @@ impl LispFunction {
         LispFunction {
             args: args.iter().map(|x| x.to_string()).collect(),
             varargs: None,
-            body: body.iter().cloned().collect(),
+            body: body.to_vec(),
             closure: Rc::new(RefCell::new(env.clone()))
         }
     }
@@ -27,7 +27,7 @@ impl LispFunction {
         LispFunction {
             args: args.iter().map(|x| x.to_string()).collect(),
             varargs: Some(varargs.to_string()),
-            body: body.iter().cloned().collect(),
+            body: body.to_vec(),
             closure: Rc::new(RefCell::new(env.clone()))
         }
     }
@@ -39,7 +39,7 @@ impl LispFunction {
             args.push(format!("{}...", varargs))
         };
 
-        format!("{}", args.join(", "))
+        args.join(", ")
     }
 
     pub fn check_arity(&self, args: &[LispValue]) -> Result<Vec<LispValue>, String> {

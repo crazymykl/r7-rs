@@ -22,7 +22,7 @@ pub fn main() {
     let mut world = LispEnvironment::default();
     let mut rl = Editor::<()>::new();
 
-    if let Err(_) = rl.load_history(HISTORY_FILE) {
+    if rl.load_history(HISTORY_FILE).is_err() {
         println!("No previous history.");
     }
 
@@ -45,7 +45,7 @@ pub fn main() {
                         }
                     }
                 }
-                if let Some(new_world) = evaluate(&line.trim(), &world) { world = new_world; }
+                if let Some(new_world) = evaluate(line.trim(), &world) { world = new_world; }
             },
             Err(ReadlineError::Interrupted) => {},
             Err(ReadlineError::Eof) => break,
