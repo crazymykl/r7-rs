@@ -1,5 +1,4 @@
-#![feature(plugin, box_syntax, slice_patterns, unboxed_closures)]
-#![plugin(peg_syntax_ext)]
+#![feature(box_syntax, slice_patterns)]
 
 extern crate num;
 extern crate rustyline;
@@ -16,7 +15,9 @@ pub use scheme::{expression, completeInput};
 
 const HISTORY_FILE: &'static str = "history.txt";
 
-peg_file! scheme("scheme.rustpeg");
+mod scheme {
+    include!(concat!(env!("OUT_DIR"), "/scheme.rs"));
+}
 
 pub fn main() {
     let mut world = LispEnvironment::default();
