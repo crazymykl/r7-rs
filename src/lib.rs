@@ -1,4 +1,4 @@
-#![feature(box_syntax, slice_patterns)]
+#![feature(slice_patterns)]
 
 extern crate num;
 extern crate rustyline;

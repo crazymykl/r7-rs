@@ -313,7 +313,7 @@ fn cons(operands: &[LispValue]) -> LispResult {
             new_list.insert(0, elt.clone());
             Ok(LispValue::DottedList(new_list, xlast.clone()))
         },
-        [ref elt1, ref elt2] => Ok(LispValue::DottedList(vec![elt1.clone()], box elt2.clone())),
+        [ref elt1, ref elt2] => Ok(LispValue::DottedList(vec![elt1.clone()], Box::new(elt2.clone()))),
         _ => unreachable!()
     }
 }

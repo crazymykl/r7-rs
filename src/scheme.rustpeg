@@ -53,7 +53,7 @@ list -> LispValue
   = exprs:listBody { LispValue::List(exprs) }
 
 dottedList -> LispValue
-  = head:listBody dot tail:expression { LispValue::DottedList(head, box tail) }
+  = head:listBody dot tail:expression { LispValue::DottedList(head, Box::new(tail)) }
 
 dot = whitespace+ "." whitespace+
 
